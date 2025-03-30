@@ -3,6 +3,7 @@ title: "Projeto_NBA"
 author: "Thomas Raphael Zonta"
 date: "`r Sys.Date()`"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
