@@ -1,38 +1,70 @@
+---
+title: "Projeto_NBA"
+author: "Thomas Raphael Zonta"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.align = "center",fig.width = 7, fig.height = 5)
+```
+
+# Importando bibliotecas
+
+```{r bibliotecas, include=TRUE, echo=TRUE, warning=FALSE}
 library(readxl)
 library(tidyverse)
 library(ggplot2)
 library(dlookr)
 library(dplyr)
 library(purrr)
+```
 
-renv::init()
-renv::snapshot()
+# Importando base dos jogos
+
+```{r base_jogos}
 
 jogos_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogos_2024.xlsx")
+```
 
-head(jogos_2024)
+# Importanto base jogadores
 
-# Jogador, Time, Idade, Jogos_Jogados, Vitorias, Derrotas, Minutos_jogados,
-# Pontos, Arremesso_certeiros, Arremessos_feitos, Porcentagem_arremessos_convertidos, 3Pontos_feitos,
-# Tentativa_3pontos, Porcentagem_acertos3, Arrem.livres_feitos, Arrem.livres_tentados, Porcent_arrem.livres,
-# Rebotes_ataque, Rebotes_defesa, Total_rebotes, Assistenc., Perder_posse, Roubos, Bloqueios, Faltas, 
-# Pontos_fantasia, Dois_duplos, Tres_duplos, plus-minus
+```{r base_jogadores}
 
 jogadores_2020 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2020.xlsx")
 jogadores_2021 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2021.xlsx")
 jogadores_2022 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2022.xlsx")
 jogadores_2023 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2023.xlsx")
 jogadores_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2024.xlsx")
+```
 
-head(jogadores_2020)
+# Checando cabeçalho base jogos
 
+Para poder visualizar quais dados nós temos para trabalhar usamos o comando head() para visualizar o topo do dataset.
 
-str(jogos_2024)
+```{r visualizar_jogos}
 
-names(jogos_2024)
+head(jogos_2024)
+```
+
+# Separar resultados dos placares existentes
+
+Iremos separar os resultados dos jogos para que possamos analisa-los individualmente no cálculo de probabilidade.
+
+```{r separar_resultados}
 
 jogos_2024 <- jogos_2024 %>%
   separate(Result, into = c("Placar_Casa", "Placar_Fora"), sep= " - ", convert =  TRUE)
+```
+
+# Renomear dataset
+
+Renomearemos as colunas para facilitar o entendimento e mudaremos o tipo de dado para int nas colunas que foram criadas.
+
+```{r renomear_jogos}
 
 colnames(jogos_2024) <- c("Numero_Round", "Data", "Local", "Time_Casa", "Visitante", "Placar_Casa", "Placar_Fora")
 
@@ -41,6 +73,15 @@ jogos_2024 <- jogos_2024 %>%
     Placar_Casa = as.numeric(Placar_Casa),
     Placar_Fora = as.numeric(Placar_Fora)
   )
+
+head(jogos_2024)
+```
+
+# Estatisticas dos times
+
+Iremos calcular as estatísticas dos times separando por jogos em casa e fora.
+
+```{r estatisticas}
 
 estatisticas_times <- jogos_2024 %>%
   filter(!is.na(Placar_Casa) & !is.na(Placar_Fora)) %>%
@@ -62,19 +103,32 @@ estatisticas_times <- jogos_2024 %>%
     by = "Time"
   )
 
+head(estatisticas_times)
+```
+
+# Associar estatísticas dos próximos jogos 
+
+Vamos associar as estatisticas do próximos jogos do time da casa e visitantes.
+
+```{r prob_jogos}
+
 jogos_futuros_tmp <- jogos_2024 %>%
   filter(is.na(Placar_Casa) & is.na(Placar_Fora)) %>%
   left_join(estatisticas_times, by = c("Time_Casa" = "Time"))
 
 colnames(jogos_futuros_tmp)
 
-
 jogos_futuros_tmp2 <- jogos_futuros_tmp %>%
   left_join(estatisticas_times, by = c("Visitante" = "Time"))
 
-colnames(jogos_futuros_tmp2)
+head(jogos_futuros_tmp2)
+```
 
-colnames(estatisticas_times)
+# Renomear colunas
+
+Vamos renomear as colunas e eliminar as colunas com valores duplicados.
+
+```{r renomear_eliminar}
 
 jogos_futuros <- jogos_futuros_tmp2 %>%
   rename(
@@ -87,8 +141,13 @@ jogos_futuros <- jogos_futuros_tmp2 %>%
 
 
 colnames(jogos_futuros)
+```
 
+# Calcular ataque e defesa
 
+Iremos calcular com base nos resultados dos jogos até o momento o poder ofensivo e defensivo dos times
+
+```{r ataque_defesa}
 
 estatisticas_times <- estatisticas_times %>%
   mutate(
@@ -96,8 +155,14 @@ estatisticas_times <- estatisticas_times %>%
     Forca_Defensiva = (Media_Pontos_Sofridos_Casa + Media_Pontos_Sofridos_Fora) / 2
   )
 
+head(estatisticas_times)
+```
 
-#
+# Calculo de pontos esperados
+
+Iremos calcular os pontos esperados baseado na quantidade de pontos que o time marca em casa + pontos que o adversário sofre fora /2 e semelhante para os visitantes.
+
+```{r pontos}
 
 jogos_futuros <- jogos_futuros %>%
   mutate(
@@ -105,6 +170,14 @@ jogos_futuros <- jogos_futuros %>%
     Pontos_Esperados_Fora = (Media_Pontos_Fora_V + Media_Pontos_Sofridos_C) / 2
   )
 
+head(jogos_futuros)
+```
+
+# Probabilidade de vitória
+
+Iremos calcular a probabilidade de vitória do time da casa e do visitante
+
+```{r prob_vitoria}
 
 jogos_futuros <- jogos_futuros %>%
   mutate(
@@ -112,21 +185,13 @@ jogos_futuros <- jogos_futuros %>%
     Prob_Vitoria_Visitante = 1 - Prob_Vitoria_Casa
   )
 
-
-
-jogos_futuros %>%
-  select(Time_Casa, Visitante, Prob_Vitoria_Casa, Prob_Vitoria_Visitante) %>%
-  arrange(desc(Prob_Vitoria_Casa))
+head(jogos_futuros)
+```
 
 
 
-tabela_resultados_previstos <- jogos_futuros %>%
-  select(Time_Casa, Visitante, Prob_Vitoria_Casa, Prob_Vitoria_Visitante)
-
-# Exibir a tabela
-tabela_resultados_previstos
-
-write.csv(tabela_resultados_previstos, "resultado_previstos.csv", row.names = FALSE)
 
 
-jogos_futuros %>% tail()
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
