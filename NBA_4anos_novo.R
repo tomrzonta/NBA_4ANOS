@@ -120,13 +120,29 @@ jogos_futuros %>%
 
 
 
+jogos_futuros <- jogos_futuros %>%
+  mutate(
+    Placar_Estimado_Casa = round(Media_Pontos_Casa_C),
+    Placar_Estimado_Fora = round(Media_Pontos_Fora_V)
+  )
+
+
+
 tabela_resultados_previstos <- jogos_futuros %>%
-  select(Time_Casa, Visitante, Prob_Vitoria_Casa, Prob_Vitoria_Visitante)
+  select(Time_Casa, Visitante, Prob_Vitoria_Casa, Prob_Vitoria_Visitante, Placar_Estimado_Casa, Placar_Estimado_Fora)
+
+
 
 # Exibir a tabela
 tabela_resultados_previstos
 
-write.csv(tabela_resultados_previstos, "resultado_previstos.csv", row.names = FALSE)
+write.csv(tabela_resultados_previstos, "resultado_previstos_att.csv", row.names = FALSE)
 
 
 jogos_futuros %>% tail()
+
+
+
+
+
+

@@ -188,7 +188,30 @@ jogos_futuros <- jogos_futuros %>%
 head(jogos_futuros)
 ```
 
+# Tabela de Resultados previstos
 
+Agora criamos a tabela de resultados previstos seguindo a ordem original da tabela baseado nos calculos que realizamos e também calculamos e adicionamos os placares para cada jogo.
+
+```{r resultados_previstos}
+
+jogos_futuros <- jogos_futuros %>%
+  mutate(
+    Placar_Estimado_Casa = round(Media_Pontos_Casa_C),
+    Placar_Estimado_Fora = round(Media_Pontos_Fora_V)
+  )
+
+
+
+tabela_resultados_previstos <- jogos_futuros %>%
+  select(Time_Casa, Visitante, Prob_Vitoria_Casa, Prob_Vitoria_Visitante, Placar_Estimado_Casa, Placar_Estimado_Fora)
+
+
+
+# Exibir a tabela
+tabela_resultados_previstos
+
+#write.csv(tabela_resultados_previstos, "resultado_previstos_att.csv", row.names = FALSE)
+```
 
 
 
