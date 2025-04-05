@@ -4,9 +4,16 @@ library(ggplot2)
 library(dlookr)
 library(dplyr)
 library(purrr)
+library(knitr)
+library(summarytools)
+library(GGally)
+library(ggpubr)
+library(mice)
 
-renv::init()
-renv::snapshot()
+
+
+# renv::init()
+# renv::snapshot()
 
 jogos_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogos_2024.xlsx")
 
@@ -18,10 +25,7 @@ head(jogos_2024)
 # Rebotes_ataque, Rebotes_defesa, Total_rebotes, Assistenc., Perder_posse, Roubos, Bloqueios, Faltas, 
 # Pontos_fantasia, Dois_duplos, Tres_duplos, plus-minus
 
-jogadores_2020 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2020.xlsx")
-jogadores_2021 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2021.xlsx")
-jogadores_2022 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2022.xlsx")
-jogadores_2023 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2023.xlsx")
+
 jogadores_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2024.xlsx")
 
 head(jogadores_2020)
@@ -141,8 +145,85 @@ write.csv(tabela_resultados_previstos, "resultado_previstos_att.csv", row.names 
 
 jogos_futuros %>% tail()
 
+################################################################################
+#################INÍCIO DA ANÁLISE DE DADOS DOS JOGADORES#######################
+################################################################################
+
+
+colnames(jogadores_2024) <- c(
+  "ID","Jogador", "Time", "Idade", "Jogos_Jogados", "Vitorias", "Derrotas", "Minutos_Jogados",
+  "Pontos", "Arremessos_Certos", "Arremessos_Totais", "Porcentagem_Acerto_Arremesso",
+  "Tres_Pontos_Certos", "Tres_Pontos_Tentados", "Porcentagem_Acerto_Tres",
+  "Lances_Livres_Certos", "Lances_Livres_Tentados", "Porcentagem_Acerto_Lance_Livre",
+  "Rebotes_Ofensivos", "Rebotes_Defensivos", "Rebotes_Totais", "Assistencias",
+  "Perdas_Posse", "Roubos", "Bloqueios", "Faltas", "Pontos_Fantasia",
+  "Duplos_Duplos", "Triplos_Duplos", "PlusMinus"
+)
+
+
+descr(jogadores_2024$Pontos)
+
+ggpairs(jogadores_2024[, c("Pontos","Assistencias","Rebotes_Totais", "Perdas_Posse")])
+
+
+ggplot(jogadores_2024, aes(x = Pontos)) +
+  geom_histogram(binwidth = 2, fill = "blue", color = "black") +
+  labs(title = "Distribuição de Pontos")
+
+
+ggqqplot(jogadores_2024$Pontos)
 
 
 
+shapiro.test(jogadores_2024$Pontos)
+
+diagnose(jogadores_2024)
 
 
+#Você pode incluir isso no seu relatório:
+  
+ # Completude dos dados: Analisamos o índice de completude da base jogadores_2024 e identificamos variáveis com dados ausentes. Utilizamos o pacote mice com o método PMM para imputação dos dados. Esse processo permite preservar a estrutura estatística da base.
+
+#Outliers: Utilizamos o pacote dlookr para detectar outliers em variáveis numéricas. Esses valores extremos podem influenciar medidas de tendência central e dispersão, por isso foram identificados para tratamento ou interpretação adequada.
+
+imputacao <- mice(jogadores_2024, m= 1, method = "pmm", seed = 3010)
+
+summary(imputacao)
+
+jogadores_2024_imputado <- complete(imputacao)
+
+
+colunas <- c("Pontos", "Assistencias", "Rebotes_Ofensivos", "Rebotes_Defensivos", "Idade")
+
+for (n in colunas) {
+  print(
+    ggplot(jogadores_2024_imputado, aes_string(x=n))+
+      geom_histogram(fill= "steelblue", color = "white", bins = 30) +
+      labs(title = paste("Histograma de", n), x = n, y = "Frequência")
+  )
+}
+
+
+
+ggqqplot(jogadores_2024_imputado$Pontos, title = "Q-Q Plot - Pontos")
+
+
+
+shapiro.test(jogadores_2024_imputado$Pontos)
+shapiro.test(jogadores_2024_imputado$Assistencias)
+
+
+diagnose(jogadores_2024) %>%
+  select(variables, missing_count, missing_percent)
+
+
+outliers <- diagnose_outlier(jogadores_2024_imputado)
+
+head(outliers)
+
+
+outliers %>%
+  filter(outliers_cnt > 0)
+
+
+head(jogadores_2024)
