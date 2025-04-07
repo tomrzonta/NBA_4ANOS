@@ -227,3 +227,5 @@ outliers %>%
 
 
 head(jogadores_2024)
+
+
