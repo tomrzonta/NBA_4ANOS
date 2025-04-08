@@ -9,7 +9,7 @@ library(summarytools)
 library(GGally)
 library(ggpubr)
 library(mice)
-
+library(corrplot)
 
 
 # renv::init()
@@ -227,5 +227,15 @@ outliers %>%
 
 
 head(jogadores_2024)
+
+correlacao <- jogadores_2024_imputado %>%
+  select(Pontos, Assistencias, Rebotes_Totais, Roubos, Bloqueios, Faltas, Perdas_Posse)
+
+cor_matrix <- cor(correlacao, use = "complete.obs")
+corrplot(cor_matrix, method = "number" )
+
+
+anova_times <- aov(Pontos ~ Time, data = jogadores_2024_imputado)
+summary(anova_times)
 
 
