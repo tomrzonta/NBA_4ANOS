@@ -12,8 +12,8 @@ library(mice)
 library(corrplot)
 
 
-# renv::init()
-# renv::snapshot()
+ renv::init()
+ renv::snapshot()
 
 jogos_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogos_2024.xlsx")
 

@@ -32,6 +32,8 @@ library(corrplot)
 
 # Importando base dos jogos
 
+Trabalharemos com a base de dados da NBA do ano 2024/2025 para ver estatístidas dos jogos e jogadores. Esperamos calcular probabilidade de resultados de jogos e também comparar jogadores.
+
 ```{r base_dados}
 
 jogos_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogos_2024.xlsx")
@@ -284,6 +286,8 @@ for (n in colunas) {
 
 ## Teste de normalidade
 
+A partir dos histogramas, Q-Q plots e do teste de Shapiro-Wilk, observa-se que a variável **Pontos** apresenta distribuição aproximadamente normal, embora com alguma assimetria visível. Já outras variáveis, como **Assistências** e **Rebotes**, demonstram maior afastamento da normalidade.
+
 ```{r normalidade}
 ggqqplot(jogadores_2024_imputado$Pontos, title = "Q-Q Plot - Pontos")
 shapiro.test(jogadores_2024_imputado$Pontos)
@@ -330,5 +334,9 @@ summary(anova_times)
 ![https://fixturedownload.com/results/nba-2024](C:/Users/Pichau/Documents/RSTUDIO/NBA_4ANOS/Tabela_NBA.png)
 
 ![https://www.espn.com.br/nba/estatisticas/jogador/_/stat/gols](C:/Users/Pichau/Documents/RSTUDIO/NBA_4ANOS/Tabela_Jogadores.png)
+
+[GITHUB](https://github.com/tomrzonta/NBA_4ANOS)
+
+
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
