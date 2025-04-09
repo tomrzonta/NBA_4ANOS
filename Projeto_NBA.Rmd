@@ -255,8 +255,6 @@ ggqqplot(jogadores_2024$Pontos)
 
 ```{r shapiro}
 shapiro.test(jogadores_2024$Pontos)
-
-diagnose(jogadores_2024)
 ```
 
 ## Imputação de dados faltantes
@@ -264,6 +262,8 @@ diagnose(jogadores_2024)
 Aplica a técnica mice com o método PMM para preencher valores faltantes da base.
 
 ```{r imputacao}
+diagnose(jogadores_2024)
+
 imputacao <- mice(jogadores_2024, m= 1, method = "pmm", seed = 3010)
 jogadores_2024_imputado <- complete(imputacao)
 ```
