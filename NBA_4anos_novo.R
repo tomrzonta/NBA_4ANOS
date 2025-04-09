@@ -137,7 +137,7 @@ tabela_resultados_previstos <- jogos_futuros %>%
 
 
 
-# Exibir a tabela
+
 tabela_resultados_previstos
 
 write.csv(tabela_resultados_previstos, "resultado_previstos_att.csv", row.names = FALSE)
@@ -178,13 +178,6 @@ ggqqplot(jogadores_2024$Pontos)
 shapiro.test(jogadores_2024$Pontos)
 
 diagnose(jogadores_2024)
-
-
-#Você pode incluir isso no seu relatório:
-  
- # Completude dos dados: Analisamos o índice de completude da base jogadores_2024 e identificamos variáveis com dados ausentes. Utilizamos o pacote mice com o método PMM para imputação dos dados. Esse processo permite preservar a estrutura estatística da base.
-
-#Outliers: Utilizamos o pacote dlookr para detectar outliers em variáveis numéricas. Esses valores extremos podem influenciar medidas de tendência central e dispersão, por isso foram identificados para tratamento ou interpretação adequada.
 
 imputacao <- mice(jogadores_2024, m= 1, method = "pmm", seed = 3010)
 

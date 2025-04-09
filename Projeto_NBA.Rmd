@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
                       fig.align = "center",fig.width = 7, fig.height = 5)
 ```
 
-# Importando bibliotecas
+# Abrindo bibliotecas
 
 ```{r bibliotecas, include=TRUE, echo=TRUE, warning=FALSE}
 library(readxl)
@@ -22,23 +22,19 @@ library(ggplot2)
 library(dlookr)
 library(dplyr)
 library(purrr)
+library(knitr)
+library(summarytools)
+library(GGally)
+library(ggpubr)
+library(mice)
+library(corrplot)
 ```
 
 # Importando base dos jogos
 
-```{r base_jogos}
+```{r base_dados}
 
 jogos_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogos_2024.xlsx")
-```
-
-# Importanto base jogadores
-
-```{r base_jogadores}
-
-jogadores_2020 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2020.xlsx")
-jogadores_2021 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2021.xlsx")
-jogadores_2022 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2022.xlsx")
-jogadores_2023 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2023.xlsx")
 jogadores_2024 <- read_excel("C:/Users/Pichau/Documents/RSTUDIO/NBA/jogadores_2024.xlsx")
 ```
 
@@ -214,11 +210,125 @@ tabela_resultados_previstos
 #write.csv(tabela_resultados_previstos, "resultado_previstos_att.csv", row.names = FALSE)
 ```
 
+## Alterar nomes de colunas
 
-```{r}
+Mudamos os nomes das colunas dos arquivos originais para facilitar o tratamento dos dados.
+```{r base_jogadores}
+colnames(jogadores_2024) <- c(
+  "ID","Jogador", "Time", "Idade", "Jogos_Jogados", "Vitorias", "Derrotas", "Minutos_Jogados",
+  "Pontos", "Arremessos_Certos", "Arremessos_Totais", "Porcentagem_Acerto_Arremesso",
+  "Tres_Pontos_Certos", "Tres_Pontos_Tentados", "Porcentagem_Acerto_Tres",
+  "Lances_Livres_Certos", "Lances_Livres_Tentados", "Porcentagem_Acerto_Lance_Livre",
+  "Rebotes_Ofensivos", "Rebotes_Defensivos", "Rebotes_Totais", "Assistencias",
+  "Perdas_Posse", "Roubos", "Bloqueios", "Faltas", "Pontos_Fantasia",
+  "Duplos_Duplos", "Triplos_Duplos", "PlusMinus"
+)
+
+```
+
+## Estatística descritiva e Gráfido de dispersão
+
+```{r gráfico}
+descr(jogadores_2024$Pontos)
+
+ggpairs(jogadores_2024[, c("Pontos","Assistencias","Rebotes_Totais", "Perdas_Posse")])
+
+
+ggplot(jogadores_2024, aes(x = Pontos)) +
+  geom_histogram(binwidth = 2, fill = "blue", color = "black") +
+  labs(title = "Distribuição de Pontos")
+```
+
+## QQPlot
+
+Para checar se variável de "Pontos" segue uma distribuição normal
+
+```{r qqplot}
+ggqqplot(jogadores_2024$Pontos)
+```
+
+## Shapiro
+
+ Teste de normalidade de Shapiro-Wilk.
+
+```{r shapiro}
+shapiro.test(jogadores_2024$Pontos)
+
+diagnose(jogadores_2024)
+```
+
+## Imputação de dados faltantes
+
+Aplica a técnica mice com o método PMM para preencher valores faltantes da base.
+
+```{r imputacao}
+imputacao <- mice(jogadores_2024, m= 1, method = "pmm", seed = 3010)
+jogadores_2024_imputado <- complete(imputacao)
+```
+
+## Histograma
+
+```{r histograma}
+colunas <- c("Pontos", "Assistencias", "Rebotes_Ofensivos", "Rebotes_Defensivos", "Idade")
+
+for (n in colunas) {
+  print(
+    ggplot(jogadores_2024_imputado, aes_string(x=n))+
+      geom_histogram(fill= "steelblue", color = "white", bins = 30) +
+      labs(title = paste("Histograma de", n), x = n, y = "Frequência")
+  )
+}
 
 ```
 
 
+## Teste de normalidade
+
+```{r normalidade}
+ggqqplot(jogadores_2024_imputado$Pontos, title = "Q-Q Plot - Pontos")
+shapiro.test(jogadores_2024_imputado$Pontos)
+shapiro.test(jogadores_2024_imputado$Assistencias)
+```
+
+## Outliers
+
+```{r outliers}
+diagnose(jogadores_2024) %>%
+  select(variables, missing_count, missing_percent)
+
+
+outliers <- diagnose_outlier(jogadores_2024_imputado)
+
+head(outliers)
+
+
+outliers %>%
+  filter(outliers_cnt > 0)
+
+
+head(jogadores_2024)
+```
+
+## Matriz de correlação
+
+```{r}
+correlacao <- jogadores_2024_imputado %>%
+  select(Pontos, Assistencias, Rebotes_Totais, Roubos, Bloqueios, Faltas, Perdas_Posse)
+
+cor_matrix <- cor(correlacao, use = "complete.obs")
+corrplot(cor_matrix, method = "number" )
+
+```
+
+## Inferência
+
+```{r inferencia}
+anova_times <- aov(Pontos ~ Time, data = jogadores_2024_imputado)
+summary(anova_times)
+```
+
+![https://fixturedownload.com/results/nba-2024](C:/Users/Pichau/Documents/RSTUDIO/NBA_4ANOS/Tabela_NBA.png)
+
+![https://www.espn.com.br/nba/estatisticas/jogador/_/stat/gols](C:/Users/Pichau/Documents/RSTUDIO/NBA_4ANOS/Tabela_Jogadores.png)
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
